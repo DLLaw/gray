@@ -1,0 +1,17 @@
+# --- start AI code ---
+# Punctuation and operators
+( ) { } , . - + ; / *
+! != = == > >= < <=
+
+# Every keyword
+and else false fn for if let null or print return true while
+
+# Identifiers
+score _value player2 For letter
+
+# Numbers
+0 21 3.14 -12
+
+# Strings
+"" "hello" "hello world" "# inside a string"
+# --- end AI code ---

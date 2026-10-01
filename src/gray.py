@@ -1,4 +1,5 @@
 import sys
+from scanner import Scanner
 
 class Gray:
     had_error = False
@@ -39,9 +40,15 @@ class Gray:
                 break
 
     @staticmethod
+    @staticmethod
     def run(source: str):
-        # Initial stub required for Lab 1
-        print("Scanner Not Implemented")
+        scanner = Scanner(source)
+        tokens = scanner.scan_tokens()
+
+        for token in tokens:
+            print(token)
+
+        Gray.had_error = scanner.had_error
 
 if __name__ == "__main__":
     Gray.main()

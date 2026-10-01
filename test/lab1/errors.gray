@@ -1,0 +1,7 @@
+@
+print "after unexpected character";
+"bad\q"
+print "after invalid escape";
+"unfinished
+print "after unterminated string";
+"unfinished at EOF
