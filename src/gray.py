@@ -1,4 +1,5 @@
 import sys
+from parser import Parser
 from scanner import Scanner
 
 class Gray:
@@ -40,15 +41,31 @@ class Gray:
                 break
 
     @staticmethod
-    @staticmethod
     def run(source: str):
+        Gray.had_error = False
+
         scanner = Scanner(source)
         tokens = scanner.scan_tokens()
 
-        for token in tokens:
-            print(token)
-
         Gray.had_error = scanner.had_error
+        if Gray.had_error:
+            return
+
+        parser = Parser(tokens)
+        expression = parser.parse()
+
+        Gray.had_error = parser.had_error
+        if Gray.had_error:
+            return
+
+        try:
+            print(expression)
+        except RecursionError:
+            print( "Error: Expression tree is too deep to print.",
+            file=sys.stderr)
+            Gray.had_error = True
+
+
 
 if __name__ == "__main__":
     Gray.main()
