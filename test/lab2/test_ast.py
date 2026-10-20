@@ -19,7 +19,7 @@ def main():
             "Nested arithmetic, unary minus, and grouping",
             Binary(
                 Unary(operator(TokenType.MINUS, "-"), Literal(123)),
-                operator(TokenType.STAR, "*"),
+                operator(TokenType.MUL, "*"),
                 Grouping(Literal(45.67)),
             ),
             "(* (- 123) (group 45.67))",
@@ -32,7 +32,7 @@ def main():
                     operator(TokenType.PLUS, "+"),
                     Literal(2),
                 ),
-                operator(TokenType.SLASH, "/"),
+                operator(TokenType.DIV, "/"),
                 Grouping(
                     Binary(
                         Literal(8),

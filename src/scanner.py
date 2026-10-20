@@ -32,8 +32,8 @@ class Scanner:
         "-": TokenType.MINUS,
         "+": TokenType.PLUS,
         ";": TokenType.SEMICOLON,
-        "/": TokenType.SLASH,
-        "*": TokenType.STAR,
+        "/": TokenType.DIV,
+        "*": TokenType.MUL,
     }
 
     paired_tokens = {

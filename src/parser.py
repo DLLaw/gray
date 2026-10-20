@@ -73,8 +73,8 @@ class Parser:
     def factor(self):
         return self.binary_chain(
             self.unary,
-            TokenType.STAR,
-            TokenType.SLASH,
+            TokenType.MUL,
+            TokenType.DIV,
         )
 
     def binary_chain(self, operand_rule, *operator_types):
