@@ -1,6 +1,7 @@
 import sys
 from parser import Parser
 from scanner import Scanner
+from evaluator import Evaluator
 
 class Gray:
     had_error = False
@@ -51,6 +52,8 @@ class Gray:
         if Gray.had_error:
             return
 
+        print("Tokens:", " ".join(token.type.name for token in tokens))
+
         parser = Parser(tokens)
         expression = parser.parse()
 
@@ -59,13 +62,20 @@ class Gray:
             return
 
         try:
-            print(expression)
+            print("LISP:", expression)
         except RecursionError:
-            print( "Error: Expression tree is too deep to print.",
-            file=sys.stderr)
+            print("Error: Expression tree is too deep to print.", file=sys.stderr)
             Gray.had_error = True
+            return
 
+        evaluator = Evaluator()
+        result = evaluator.evaluate(expression)
 
+        Gray.had_error = evaluator.had_error
+        if Gray.had_error:
+            return
+
+        print("Result:",Evaluator.stringify(result))
 
 if __name__ == "__main__":
     Gray.main()
