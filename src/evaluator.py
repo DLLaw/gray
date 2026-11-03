@@ -2,11 +2,24 @@ import operator
 import sys
 
 from expr import Binary, Grouping, Literal, Unary
+from stmt import ExpressionStmt, PrintStmt
 
 
 class Evaluator:
     def __init__(self):
         self.had_error = False
+
+    def execute(self, statements):
+        self.had_error = False
+
+        for statement in statements:
+            value = self.evaluate(statement.expression)
+
+            if self.had_error:
+                return
+
+            if isinstance(statement, PrintStmt):
+                print(self.stringify(value))
 
     def evaluate(self, expression):
         self.had_error = False

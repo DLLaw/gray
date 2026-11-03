@@ -2,6 +2,7 @@ import sys
 
 from expr import Binary, Grouping, Literal, Unary
 from token_type import TokenType
+from stmt import ExpressionStmt, PrintStmt
 
 
 class ParseError(Exception):
@@ -15,22 +16,44 @@ class Parser:
         self.had_error = False
 
     def parse(self):
-        try:
+        statements = []
+
+        while not self.is_at_end():
+            try:
+                statements.append(self.statement())
+            except ParseError:
+                self.synchronize()
+            except RecursionError:
+                self.error(self.peek(), "Expression is nested too much.")
+                self.synchronize()
+
+        return statements
+
+    def statement(self):
+        if self.match(TokenType.PRINT):
             expression = self.expression()
+            self.consume(
+                TokenType.SEMICOLON,
+                "Expected ';' after print statement.",
+            )
+            return PrintStmt(expression)
 
-            if not self.is_at_end():
-                raise self.error(
-                    self.peek(),
-                    "Unexpected trailing token.",
-                )
+        expression = self.expression()
+        self.consume(
+            TokenType.SEMICOLON,
+            "Expected ';' after expression.",
+        )
+        return ExpressionStmt(expression)
 
-            return expression
+    def synchronize(self):
+        while not self.is_at_end():
+            # A new print statement is a place to resume parsing.
+            if self.check(TokenType.PRINT):
+                return
 
-        except ParseError:
-            return None
-        except RecursionError:
-            self.error(self.peek(), "Expression is nested too much.")
-            return None
+            # Otherwise skip through the next semicolon.
+            if self.advance().type == TokenType.SEMICOLON:
+                return
 
     def expression(self):
         return self.logical_or()
