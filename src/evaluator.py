@@ -1,25 +1,54 @@
 import operator
 import sys
 
-from expr import Binary, Grouping, Literal, Unary
-from stmt import ExpressionStmt, PrintStmt
+from expr import Binary, Grouping, Literal, Unary, Assign, Variable
+from stmt import ExpressionStmt, PrintStmt, BlockStmt, LetStmt
 
+class Environment:
+    def __init__(self, outer=None):
+        self.values = {}
+        self.outer = outer
+
+    def find(self, name):
+        scope = self
+        while scope is not None:
+            if name in scope.values:
+                return scope
+            scope = scope.outer
+        return None
 
 class Evaluator:
     def __init__(self):
         self.had_error = False
+        self.environment = Environment()
 
     def execute(self, statements):
         self.had_error = False
+        self.execute_statements(statements)
 
+
+    def execute_statements(self, statements):
         for statement in statements:
-            value = self.evaluate(statement.expression)
+            if isinstance(statement, BlockStmt):
+                outer = self.environment
+                self.environment = Environment(outer)
+                try:
+                    self.execute_statements(statement.statements)
+                finally:
+                    self.environment = outer
+            elif isinstance(statement, LetStmt):
+                value = None
+                if statement.initializer is not None:
+                    value = self.evaluate(statement.initializer)
+                if not self.had_error:
+                    self.environment.values[statement.name.lexeme] = value
 
+            else:
+                value = self.evaluate(statement.expression)
+                if not self.had_error and isinstance(statement, PrintStmt):
+                    print(self.stringify(value))
             if self.had_error:
                 return
-
-            if isinstance(statement, PrintStmt):
-                print(self.stringify(value))
 
     def evaluate(self, expression):
         self.had_error = False
@@ -86,7 +115,21 @@ class Evaluator:
                 self.error(token, "Unsupported operator.")
             return operations[symbol](left, right)
 
+        if isinstance(expression, (Variable, Assign)):
+            name = expression.name
+            scope = self.environment.find(name.lexeme)
+            if scope is None:
+                self.error(name, f"Undefined variable '{name.lexeme}'.")
+
+            if isinstance(expression, Assign):
+                value = self.calculate(expression.value)
+                scope.values[name.lexeme] = value
+                return value
+
+            return scope.values[name.lexeme]
+
         raise RuntimeError("Unknown expression.")
+
 
     @staticmethod
     def is_number(value):

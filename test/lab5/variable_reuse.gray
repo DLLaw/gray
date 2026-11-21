@@ -1,0 +1,3 @@
+let score = 1;
+let score = 2;
+print score;

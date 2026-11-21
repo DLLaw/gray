@@ -49,3 +49,20 @@ class Grouping(Expr):
 
     def __str__(self):
         return f"(group {self.expression})"
+
+
+class Variable(Expr):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name.lexeme
+
+
+class Assign(Expr):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+    def __str__(self):
+        return f"(= {self.name.lexeme} {self.value})"

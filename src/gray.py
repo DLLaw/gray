@@ -30,19 +30,21 @@ class Gray:
 
     @staticmethod
     def run_prompt():
+        evaluator = Evaluator()
+
         while True:
             try:
                 line = input("> ")
                 if line is None:
                     break
-                Gray.run(line)
+                Gray.run(line, evaluator)
                 Gray.had_error = False
             except (KeyboardInterrupt, EOFError):
                 print("\nExiting REPL...")
                 break
 
     @staticmethod
-    def run(source: str):
+    def run(source: str, evaluator=None):
         Gray.had_error = False
 
         scanner = Scanner(source)
@@ -60,7 +62,8 @@ class Gray:
         if Gray.had_error:
             return
 
-        evaluator = Evaluator()
+        if evaluator is None:
+            evaluator = Evaluator()
         evaluator.execute(statements)
         Gray.had_error = evaluator.had_error
 

@@ -1,8 +1,8 @@
 import sys
 
-from expr import Binary, Grouping, Literal, Unary
+from expr import Binary, Grouping, Literal, Unary, Assign, Variable
 from token_type import TokenType
-from stmt import ExpressionStmt, PrintStmt
+from stmt import ExpressionStmt, PrintStmt, BlockStmt, LetStmt
 
 
 class ParseError(Exception):
@@ -19,17 +19,49 @@ class Parser:
         statements = []
 
         while not self.is_at_end():
-            try:
-                statements.append(self.statement())
-            except ParseError:
-                self.synchronize()
-            except RecursionError:
-                self.error(self.peek(), "Expression is nested too much.")
-                self.synchronize()
-
+            statement = self.declaration()
+            if statement is not None:
+                statements.append(statement)
         return statements
 
+    def declaration(self, in_block=False):
+        try:
+            if self.match(TokenType.LET):
+                name = self.consume(
+                    TokenType.IDENTIFIER, "Expected a variable name after 'let'."
+                )
+                initializer = None
+                if self.match(TokenType.EQUAL):
+                    initializer = self.expression()
+                self.consume(
+                    TokenType.SEMICOLON, "Expected ';' after declaration."
+                )
+                return LetStmt(name, initializer)
+
+            return self.statement()
+        except ParseError:
+            self.synchronize(in_block)
+        except RecursionError:
+            self.error(self.peek(), "Code is nested too deeply.")
+            self.synchronize(in_block)
+
+    def block(self):
+        statements = []
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            statement = self.declaration(in_block=True)
+            if statement is not None:
+                statements.append(statement)
+
+        self.consume(TokenType.RIGHT_BRACE, "Expected '}' to close block.")
+        return BlockStmt(statements)
+
     def statement(self):
+        if self.match(TokenType.LEFT_BRACE):
+            return self.block()
+
+        if self.check(TokenType.RIGHT_BRACE):
+            raise self.error(self.peek(), "Unmatched '}'.")
+
         if self.match(TokenType.PRINT):
             expression = self.expression()
             self.consume(
@@ -45,18 +77,32 @@ class Parser:
         )
         return ExpressionStmt(expression)
 
-    def synchronize(self):
+    def synchronize(self, in_block=False):
         while not self.is_at_end():
-            # A new print statement is a place to resume parsing.
-            if self.check(TokenType.PRINT):
+
+            if in_block and self.check(TokenType.RIGHT_BRACE):
                 return
 
-            # Otherwise skip through the next semicolon.
+            if self.peek().type in (
+                TokenType.LET, TokenType.PRINT, TokenType.LEFT_BRACE):
+                return
+
             if self.advance().type == TokenType.SEMICOLON:
                 return
 
     def expression(self):
-        return self.logical_or()
+        left = self.logical_or()
+
+        if self.match(TokenType.EQUAL):
+            equals = self.previous()
+            value = self.expression()
+
+            if not isinstance(left, Variable):
+                raise self.error(equals, "Invalid assignment target")
+
+            return Assign(left.name, value)
+        return left
+
 
     def logical_or(self):
         return self.binary_chain(
@@ -141,6 +187,8 @@ class Parser:
             )
 
             return Grouping(expression)
+        if self.match(TokenType.IDENTIFIER):
+            return Variable(self.previous())
 
         raise self.error(
             self.peek(),
